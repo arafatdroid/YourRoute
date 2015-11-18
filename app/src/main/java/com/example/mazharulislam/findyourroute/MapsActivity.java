@@ -17,7 +17,9 @@ import java.net.HttpURLConnection;
         import org.json.JSONObject;
 
         import android.graphics.Color;
-        import android.os.AsyncTask;
+import android.location.Address;
+import android.location.Geocoder;
+import android.os.AsyncTask;
         import android.os.Bundle;
         import android.support.v4.app.FragmentActivity;
         import android.util.Log;
@@ -25,8 +27,10 @@ import java.net.HttpURLConnection;
         import android.view.View;
         import android.view.View.OnClickListener;
         import android.widget.Button;
+import android.widget.EditText;
 
-        import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
         import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
         import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
         import com.google.android.gms.maps.SupportMapFragment;
@@ -69,7 +73,7 @@ public class MapsActivity extends FragmentActivity {
 
                 // Already 10 locations with 8 waypoints and 1 start location and 1 end location.
                 // Upto 8 waypoints are allowed in a query for non-business users
-                if(markerPoints.size()>=10){
+                if (markerPoints.size() >= 10) {
                     return;
                 }
 
@@ -87,11 +91,11 @@ public class MapsActivity extends FragmentActivity {
                  * for the end location, the color of marker is RED and
                  * for the rest of markers, the color is AZURE
                  */
-                if(markerPoints.size()==1){
+                if (markerPoints.size() == 1) {
                     options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                }else if(markerPoints.size()==2){
+                } else if (markerPoints.size() == 2) {
                     options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                }else{
+                } else {
                     options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                 }
 
@@ -117,27 +121,11 @@ public class MapsActivity extends FragmentActivity {
         });
 
 
+
+
+
         // Click event handler for Button btn_draw
-        btnDraw.setOnClickListener(new OnClickListener() {
 
-            @Override
-            public void onClick(View v) {
-                // Checks, whether start and end locations are captured
-                if(markerPoints.size() >= 2){
-                    LatLng origin = markerPoints.get(0);
-                    LatLng dest = markerPoints.get(1);
-
-                    // Getting URL to the Google Directions API
-                    String url = getDirectionsUrl(origin, dest);
-
-                    DownloadTask downloadTask = new DownloadTask();
-
-                    // Start downloading json data from Google Directions API
-                    downloadTask.execute(url);
-                }
-
-            }
-        });
 
 
     }
@@ -155,12 +143,12 @@ public class MapsActivity extends FragmentActivity {
 
         // Waypoints
         String waypoints = "";
-        for(int i=2;i<markerPoints.size();i++){
-            LatLng point  = (LatLng) markerPoints.get(i);
-            if(i==2)
-                waypoints = "waypoints=";
-            waypoints += point.latitude + "," + point.longitude + "|";
-        }
+//        for(int i=2;i<2;i++){
+//            LatLng point  = (LatLng) markerPoints.get(i);
+//            if(i==2)
+//                waypoints = "waypoints=";
+//            waypoints += point.latitude + "," + point.longitude + "|";
+//        }
 
 
         // Building the parameters to the web service
@@ -215,6 +203,52 @@ public class MapsActivity extends FragmentActivity {
         return data;
     }
 
+    public void search(View view)
+    {
+
+        EditText et1=(EditText)findViewById(R.id.eT1);
+        EditText et2=(EditText)findViewById(R.id.eT2);
+        String location= et1.getText().toString();
+        String location2=et2.getText().toString();
+        List<Address>addressList=null;
+        List<Address> addressList2=null;
+        if(location!=null || !location.equals(""))
+        {
+            Geocoder geocoder=new Geocoder(this);
+            try{
+                addressList= geocoder.getFromLocationName(location,1);
+                addressList2=geocoder.getFromLocationName(location2,1);
+
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+            Address address=addressList.get(0);
+            Address address1=addressList2.get(0);
+
+            LatLng latLng1= new LatLng(address.getLatitude(),address.getLongitude());
+            LatLng latLng2= new LatLng(address1.getLatitude(),address1.getLongitude());
+            map.addMarker(new MarkerOptions().position(latLng1).title(location));
+            map.addMarker(new MarkerOptions().position(latLng1).title(location2));
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(address.getLatitude(),address.getLongitude()),9.0f));
+//            LatLng origin = markerPoints.get(0);
+//            LatLng dest = markerPoints.get(1);
+
+            // Getting URL to the Google Directions API
+            String url = getDirectionsUrl(latLng1, latLng2);
+
+            DownloadTask downloadTask = new DownloadTask();
+
+            // Start downloading json data from Google Directions API
+            downloadTask.execute(url);
+
+
+
+
+        }
+
+    }
 
 
     // Fetches data from url passed
